@@ -1,10 +1,10 @@
 # ARDE.RealEstate3D
 
-**Producto:** ARDE Real Estate Experience  
-**MVP:** 0.1  
+**Producto:** ARDE Real Estate Experience
+**MVP:** 0.2
 **Proyecto demo:** Residencias Norte · Av. Libertador 2450 · Entrega estimada Diciembre 2027
 
-ARDE.RealEstate3D es una base funcional en Unity para una experiencia inmobiliaria 3D interactiva orientada a web, totems táctiles, salas de venta y presentaciones comerciales. Este entregable prioriza arquitectura, modularidad, datos mockeados y un flujo completo antes que estética final.
+ARDE.RealEstate3D es una base funcional en Unity para una experiencia inmobiliaria 3D interactiva orientada a web, totems táctiles, salas de venta y presentaciones comerciales. Este entregable evoluciona la base técnica hacia una demo comercial más presentable: navegación guiada por ambientes, UI premium básica, unidades legibles y un departamento placeholder mejor armado sin assets externos.
 
 ## Stack objetivo
 
@@ -16,12 +16,12 @@ ARDE.RealEstate3D es una base funcional en Unity para una experiencia inmobiliar
 - Compatible con mouse y pantallas táctiles.
 - Sin dependencias externas obligatorias.
 
-## Alcance del MVP 0.1
+## Alcance del MVP 0.2
 
 Incluye la base para:
 
 1. Pantalla inicial premium mockeada.
-2. Recorrido 3D simple de departamento modelo con placeholders.
+2. Recorrido 3D guiado por ambientes con transiciones suaves de cámara.
 3. Hotspots interactivos para living, cocina, dormitorio, baño y balcón.
 4. Panel lateral de información con título, descripción, datos y botón **Consultar**.
 5. Modal QR/WhatsApp con mensaje precargado.
@@ -30,6 +30,8 @@ Incluye la base para:
 8. Pantalla **Contacto** con QR placeholder y botón WhatsApp.
 9. Modo totem con reinicio automático al **HomeScreen** tras 45 segundos sin interacción.
 10. Navegación principal: Inicio, Recorrido, Unidades, Amenities y Contacto.
+11. Menú de ambientes: General, Living, Cocina, Dormitorio, Baño y Balcón.
+12. Departamento placeholder más completo con living, cocina, dormitorio, baño, balcón, ventanas, mobiliario básico y luz cálida.
 
 ## Estructura de carpetas
 
@@ -59,7 +61,7 @@ Assets/
 
 - `ExperienceManager.cs`: controla la navegación entre pantallas y la apertura de consultas.
 - `IdleResetManager.cs`: detecta interacción por mouse, teclado o touch y resetea la experiencia tras 45 segundos de inactividad.
-- `CameraPointController.cs`: permite mover la cámara entre puntos y raycastear hotspots.
+- `CameraPointController.cs`: permite mover suavemente la cámara entre puntos de ambiente y raycastear hotspots.
 - `Hotspot.cs`: componente interactivo para seleccionar hotspots 3D.
 - `HotspotData.cs`: clase serializable para datos de hotspots.
 - `InfoPanelController.cs`: muestra el panel lateral de hotspot y dispara consultas.
@@ -68,8 +70,9 @@ Assets/
 - `UnitsController.cs`: genera la lista de unidades.
 - `AmenityData.cs`: clase serializable para amenities.
 - `AmenitiesController.cs`: genera la grilla de amenities.
-- `NavigationButton.cs`: conecta botones de navegación con secciones del `ExperienceManager`.
-- `MainSceneBuilder.cs`: herramienta de Editor para generar una escena funcional mockeada.
+- `NavigationButton.cs`: conecta botones de navegación con secciones del `ExperienceManager` y muestra estado activo.
+- `CameraPointButton.cs`: conecta botones de ambientes con `CameraPointController` y muestra estado activo.
+- `MainSceneBuilder.cs`: herramienta de Editor ubicada en `Assets/_Project/Scripts/Editor` para generar una escena funcional mockeada.
 
 ## Cómo abrirlo en Unity
 
@@ -85,7 +88,7 @@ Assets/
 
 1. Abrir el proyecto en Unity.
 2. Esperar a que Unity compile los scripts.
-3. En la barra superior, ejecutar: **ARDE > Crear MainScene MVP 0.1**.
+3. En la barra superior, ejecutar: **ARDE > Crear MainScene MVP 0.2**.
 4. Unity generará y guardará la escena en:
 
 ```text
@@ -104,7 +107,9 @@ La escena creada contiene:
 - AmenitiesScreen.
 - ContactScreen.
 - Modal QR/WhatsApp.
-- Departamento placeholder construido con primitivas.
+- Departamento placeholder construido con primitivas y mobiliario básico.
+- Seis puntos de cámara: General, Living, Cocina, Dormitorio, Baño y Balcón.
+- Menú de ambientes para navegación guiada tipo tour.
 - Cinco hotspots interactivos con los datos mockeados del MVP.
 - Managers principales configurados.
 
@@ -114,21 +119,28 @@ La escena creada contiene:
 2. Presionar **Play**.
 3. La app inicia en **HomeScreen**.
 4. Tocar o clickear **Iniciar recorrido**.
-5. En el recorrido, clickear/tocar los hotspots amarillos:
+5. En el recorrido, usar el menú inferior de ambientes para mover la cámara suavemente entre:
+   - General.
+   - Living.
+   - Cocina.
+   - Dormitorio.
+   - Baño.
+   - Balcón.
+6. Clickear/tocar los hotspots dorados:
    - Living comedor.
    - Cocina integrada.
    - Dormitorio principal.
    - Baño completo.
    - Balcón.
-6. Verificar que se abra el panel lateral con título, descripción y datos.
-7. Tocar **Consultar** para abrir el modal QR/WhatsApp.
-8. Usar la navegación superior para visitar:
+7. Verificar que se abra el panel lateral con título, descripción, datos y botón **Cerrar**.
+8. Tocar **Consultar** para abrir el modal QR/WhatsApp.
+9. Usar la navegación superior para visitar:
    - Inicio.
    - Recorrido.
    - Unidades.
    - Amenities.
    - Contacto.
-9. Dejar la app sin interacción durante 45 segundos y verificar que vuelve automáticamente a **HomeScreen**.
+10. Dejar la app sin interacción durante 45 segundos y verificar que vuelve automáticamente a **HomeScreen**.
 
 ## Datos mockeados incluidos
 
@@ -187,6 +199,20 @@ Si preferís armar o extender la escena manualmente:
 8. Crear botones de navegación y agregar `NavigationButton`, seleccionando la sección destino.
 9. Para unidades y amenities, asignar un contenedor UI a `UnitsController` y `AmenitiesController`. Si no se asignan prefabs de card, los controladores crean cards simples por defecto.
 
+
+## Cómo cambiar datos mockeados
+
+- **Hotspots:** editar los `HotspotData` creados en `CreateHotspots` dentro de `Assets/_Project/Scripts/Editor/MainSceneBuilder.cs`. Si la escena ya fue generada, también se pueden ajustar desde cada componente `Hotspot` en el Inspector.
+- **Unidades:** editar la lista `units` de `UnitsController` o reemplazarla desde otro script con `SetUnits`.
+- **Amenities:** editar la lista `amenities` de `AmenitiesController`.
+- Después de modificar datos en el builder, volver a ejecutar **ARDE > Crear MainScene MVP 0.2** para regenerar la escena completa.
+
+## Cómo cambiar teléfono y mensaje WhatsApp
+
+- En el modal, editar `phoneNumber` y `preloadedMessage` en `QRPanelController`.
+- En la pantalla Contacto, editar los mismos campos en el componente `WhatsAppButton`.
+- El número debe estar en formato internacional sin `+`, por ejemplo `5491112345678`.
+
 ## Configurar build WebGL
 
 1. Instalar el módulo **WebGL Build Support** desde Unity Hub si no está disponible.
@@ -229,14 +255,15 @@ Si preferís armar o extender la escena manualmente:
 
 ### MVP 0.2 — Demo comercial mejorada
 
-- Reemplazo de primitivas por modelo 3D real o greybox arquitectónico más fiel.
-- Prefabs visuales definitivos para hotspots, cards y modales.
-- Estados visuales de navegación activa.
-- Transiciones entre pantallas.
-- Cámara orbit/pan limitada para recorrido.
-- ScriptableObjects para cargar proyectos, hotspots, unidades y amenities por desarrollo.
-- QR real configurable por proyecto.
-- Ajustes específicos para WebGL y totems táctiles.
+- Navegación guiada por ambientes con botones visibles y transiciones suaves.
+- UI premium básica con colores sobrios, botones grandes, estados activos y textos legibles.
+- HomeScreen comercial centrada en Residencias Norte.
+- ExperienceScreen con overlay discreto, menú de ambientes y panel lateral menos invasivo.
+- Departamento placeholder con living, cocina, dormitorio, baño, balcón, ventanas, barandas y mobiliario básico.
+- Cards horizontales de unidades con estado, precio y botón Consultar.
+- Amenities con inicial destacada, título y descripción.
+- Contacto y QRModal más claros para totem.
+- Correcciones técnicas: builder en carpeta Editor, sin `forceModuleActive`, fuente `LegacyRuntime.ttf` y hotspots sin doble disparo.
 
 ### Versión 1.0 — Producto demo premium
 

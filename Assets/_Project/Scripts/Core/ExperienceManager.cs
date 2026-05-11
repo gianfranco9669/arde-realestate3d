@@ -1,3 +1,4 @@
+using System;
 using ARDE.RealEstate3D.UI;
 using UnityEngine;
 
@@ -27,6 +28,7 @@ namespace ARDE.RealEstate3D.Core
 
         private ExperienceSection currentSection;
 
+        public event Action<ExperienceSection> SectionChanged;
         public ExperienceSection CurrentSection => currentSection;
 
         private void Start()
@@ -59,6 +61,8 @@ namespace ARDE.RealEstate3D.Core
             {
                 qrPanel.Hide();
             }
+
+            SectionChanged?.Invoke(currentSection);
         }
 
         public void OpenConsultation()

@@ -1,12 +1,11 @@
 using ARDE.RealEstate3D.Data;
 using ARDE.RealEstate3D.UI;
 using UnityEngine;
-using UnityEngine.EventSystems;
 
 namespace ARDE.RealEstate3D.Hotspots
 {
     [RequireComponent(typeof(Collider))]
-    public class Hotspot : MonoBehaviour, IPointerClickHandler
+    public class Hotspot : MonoBehaviour
     {
         [SerializeField] private HotspotData data;
         [SerializeField] private InfoPanelController infoPanel;
@@ -37,16 +36,6 @@ namespace ARDE.RealEstate3D.Hotspots
 
             float pulse = 1f + Mathf.Sin(Time.time * pulseSpeed) * pulseAmount;
             visualRoot.localScale = initialScale * pulse;
-        }
-
-        private void OnMouseDown()
-        {
-            Select();
-        }
-
-        public void OnPointerClick(PointerEventData eventData)
-        {
-            Select();
         }
 
         public void Configure(HotspotData hotspotData, InfoPanelController panel)

@@ -1,17 +1,39 @@
+using System;
 using ARDE.RealEstate3D.Hotspots;
 using UnityEngine;
 
 namespace ARDE.RealEstate3D.Core
 {
+    [Serializable]
+    public class CameraPoint
+    {
+        [SerializeField] private string label;
+        [SerializeField] private Transform point;
+
+        public string Label => label;
+        public Transform Point => point;
+
+        public CameraPoint(string label, Transform point)
+        {
+            this.label = label;
+            this.point = point;
+        }
+    }
+
     public class CameraPointController : MonoBehaviour
     {
         [SerializeField] private Camera targetCamera;
-        [SerializeField] private Transform[] cameraPoints;
-        [SerializeField] private float moveSpeed = 5f;
+        [SerializeField] private CameraPoint[] cameraPoints;
+        [SerializeField] private float moveSpeed = 3.8f;
+        [SerializeField] private float rotateSpeed = 4.5f;
         [SerializeField] private LayerMask hotspotLayerMask = ~0;
 
         private int currentIndex;
         private Transform activePoint;
+
+        public event Action<int> CameraPointChanged;
+        public int CurrentIndex => currentIndex;
+        public CameraPoint[] CameraPoints => cameraPoints;
 
         private void Awake()
         {
@@ -32,15 +54,21 @@ namespace ARDE.RealEstate3D.Core
             SmoothCameraMovement();
         }
 
-        public void MoveToPoint(int index, bool instant = false)
+        public void MoveToPoint(int index)
         {
-            if (cameraPoints == null || index < 0 || index >= cameraPoints.Length)
+            MoveToPoint(index, false);
+        }
+
+        public void MoveToPoint(int index, bool instant)
+        {
+            if (cameraPoints == null || index < 0 || index >= cameraPoints.Length || cameraPoints[index].Point == null)
             {
                 return;
             }
 
             currentIndex = index;
-            activePoint = cameraPoints[currentIndex];
+            activePoint = cameraPoints[currentIndex].Point;
+            CameraPointChanged?.Invoke(currentIndex);
 
             if (instant && targetCamera != null)
             {
@@ -66,7 +94,7 @@ namespace ARDE.RealEstate3D.Core
             }
 
             targetCamera.transform.position = Vector3.Lerp(targetCamera.transform.position, activePoint.position, Time.deltaTime * moveSpeed);
-            targetCamera.transform.rotation = Quaternion.Slerp(targetCamera.transform.rotation, activePoint.rotation, Time.deltaTime * moveSpeed);
+            targetCamera.transform.rotation = Quaternion.Slerp(targetCamera.transform.rotation, activePoint.rotation, Time.deltaTime * rotateSpeed);
         }
 
         private void HandleHotspotInput()

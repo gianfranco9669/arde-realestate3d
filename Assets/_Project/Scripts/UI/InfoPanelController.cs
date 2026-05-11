@@ -13,6 +13,7 @@ namespace ARDE.RealEstate3D.UI
         [SerializeField] private Text descriptionText;
         [SerializeField] private Text detailsText;
         [SerializeField] private Button consultButton;
+        [SerializeField] private Button closeButton;
         [SerializeField] private UnityEvent onConsultRequested;
         [SerializeField] private ExperienceManager experienceManager;
 
@@ -21,6 +22,11 @@ namespace ARDE.RealEstate3D.UI
             if (consultButton != null)
             {
                 consultButton.onClick.AddListener(Consult);
+            }
+
+            if (closeButton != null)
+            {
+                closeButton.onClick.AddListener(Hide);
             }
 
             if (experienceManager == null)

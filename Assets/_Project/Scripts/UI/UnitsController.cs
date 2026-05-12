@@ -79,41 +79,83 @@ namespace ARDE.RealEstate3D.UI
         {
             GameObject card = new GameObject($"Unidad {unit.Code}", typeof(RectTransform), typeof(Image), typeof(LayoutElement));
             card.transform.SetParent(parent, false);
-            card.GetComponent<Image>().color = new Color(0.98f, 0.96f, 0.9f, 1f);
-
-            LayoutElement layoutElement = card.GetComponent<LayoutElement>();
-            layoutElement.minHeight = 150f;
-            layoutElement.preferredHeight = 158f;
+            card.GetComponent<Image>().color = new Color(0.98f, 0.96f, 0.90f, 1f);
 
             RectTransform cardRect = card.GetComponent<RectTransform>();
             cardRect.anchorMin = new Vector2(0f, 0.5f);
             cardRect.anchorMax = new Vector2(1f, 0.5f);
             cardRect.pivot = new Vector2(0.5f, 0.5f);
+            cardRect.sizeDelta = new Vector2(0f, 158f);
 
-            CreateText(card.transform, "Unidad", 20, FontStyle.Normal, TextAnchor.UpperLeft, new Color(0.46f, 0.38f, 0.26f), new Vector2(0.035f, 0.58f), new Vector2(0.13f, 0.84f));
-            CreateText(card.transform, unit.Code, 42, FontStyle.Bold, TextAnchor.LowerLeft, new Color(0.09f, 0.075f, 0.055f), new Vector2(0.035f, 0.16f), new Vector2(0.13f, 0.62f));
+            LayoutElement layoutElement = card.GetComponent<LayoutElement>();
+            layoutElement.minHeight = 150f;
+            layoutElement.preferredHeight = 158f;
+            layoutElement.flexibleWidth = 1f;
 
-            CreateText(card.transform, "Tipología", 20, FontStyle.Normal, TextAnchor.UpperLeft, new Color(0.46f, 0.38f, 0.26f), new Vector2(0.16f, 0.58f), new Vector2(0.37f, 0.84f));
-            CreateText(card.transform, unit.Typology, 30, FontStyle.Bold, TextAnchor.LowerLeft, new Color(0.11f, 0.095f, 0.075f), new Vector2(0.16f, 0.16f), new Vector2(0.37f, 0.62f));
+            HorizontalLayoutGroup row = card.AddComponent<HorizontalLayoutGroup>();
+            row.padding = new RectOffset(28, 28, 18, 18);
+            row.spacing = 22f;
+            row.childAlignment = TextAnchor.MiddleCenter;
+            row.childControlWidth = true;
+            row.childControlHeight = true;
+            row.childForceExpandWidth = false;
+            row.childForceExpandHeight = true;
 
-            CreateText(card.transform, "Superficie", 20, FontStyle.Normal, TextAnchor.UpperLeft, new Color(0.46f, 0.38f, 0.26f), new Vector2(0.40f, 0.58f), new Vector2(0.52f, 0.84f));
-            CreateText(card.transform, unit.Area, 30, FontStyle.Bold, TextAnchor.LowerLeft, new Color(0.11f, 0.095f, 0.075f), new Vector2(0.40f, 0.16f), new Vector2(0.52f, 0.62f));
-
-            GameObject badge = CreatePanel(card.transform, "EstadoBadge", GetStatusColor(unit.Status), new Vector2(0.56f, 0.30f), new Vector2(0.70f, 0.72f));
-            CreateText(badge.transform, unit.Status, 24, FontStyle.Bold, TextAnchor.MiddleCenter, Color.white, Vector2.zero, Vector2.one);
-
-            CreateText(card.transform, "Precio", 20, FontStyle.Normal, TextAnchor.UpperRight, new Color(0.46f, 0.38f, 0.26f), new Vector2(0.72f, 0.58f), new Vector2(0.84f, 0.84f));
-            CreateText(card.transform, unit.Price, 30, FontStyle.Bold, TextAnchor.LowerRight, new Color(0.09f, 0.075f, 0.055f), new Vector2(0.70f, 0.16f), new Vector2(0.84f, 0.62f));
+            CreateTextColumn(card.transform, "Unidad", unit.Code, 128f, 20, 42, TextAnchor.MiddleLeft);
+            CreateTextColumn(card.transform, "Tipología", unit.Typology, 300f, 20, 30, TextAnchor.MiddleLeft);
+            CreateTextColumn(card.transform, "Superficie", unit.Area, 170f, 20, 30, TextAnchor.MiddleLeft);
+            CreateStatusBadge(card.transform, unit.Status, 195f);
+            CreateTextColumn(card.transform, "Precio", unit.Price, 245f, 20, 30, TextAnchor.MiddleRight);
 
             Button consult = CreateButton("Consultar", card.transform, new Color(0.72f, 0.58f, 0.34f));
-            RectTransform consultRect = consult.GetComponent<RectTransform>();
-            consultRect.anchorMin = new Vector2(0.865f, 0.26f);
-            consultRect.anchorMax = new Vector2(0.975f, 0.74f);
-            consultRect.offsetMin = Vector2.zero;
-            consultRect.offsetMax = Vector2.zero;
+            LayoutElement consultLayout = consult.gameObject.AddComponent<LayoutElement>();
+            consultLayout.minWidth = 205f;
+            consultLayout.preferredWidth = 215f;
+            consultLayout.minHeight = 80f;
+            consultLayout.preferredHeight = 86f;
             consult.onClick.AddListener(onConsult);
 
             return card;
+        }
+
+        private static void CreateTextColumn(Transform parent, string label, string value, float width, int labelSize, int valueSize, TextAnchor alignment)
+        {
+            GameObject column = new GameObject($"{label}Column", typeof(RectTransform), typeof(LayoutElement), typeof(VerticalLayoutGroup));
+            column.transform.SetParent(parent, false);
+
+            LayoutElement layoutElement = column.GetComponent<LayoutElement>();
+            layoutElement.minWidth = width;
+            layoutElement.preferredWidth = width;
+            layoutElement.flexibleHeight = 1f;
+
+            VerticalLayoutGroup columnLayout = column.GetComponent<VerticalLayoutGroup>();
+            columnLayout.spacing = 2f;
+            columnLayout.childAlignment = alignment;
+            columnLayout.childControlWidth = true;
+            columnLayout.childControlHeight = true;
+            columnLayout.childForceExpandWidth = true;
+            columnLayout.childForceExpandHeight = false;
+
+            Text labelText = CreateText(column.transform, label, labelSize, FontStyle.Normal, alignment, new Color(0.46f, 0.38f, 0.26f));
+            labelText.gameObject.AddComponent<LayoutElement>().preferredHeight = 34f;
+
+            Text valueText = CreateText(column.transform, value, valueSize, FontStyle.Bold, alignment, new Color(0.09f, 0.075f, 0.055f));
+            valueText.gameObject.AddComponent<LayoutElement>().preferredHeight = 60f;
+        }
+
+        private static void CreateStatusBadge(Transform parent, string status, float width)
+        {
+            GameObject badge = new GameObject("EstadoBadge", typeof(RectTransform), typeof(Image), typeof(LayoutElement));
+            badge.transform.SetParent(parent, false);
+            badge.GetComponent<Image>().color = GetStatusColor(status);
+
+            LayoutElement layoutElement = badge.GetComponent<LayoutElement>();
+            layoutElement.minWidth = width;
+            layoutElement.preferredWidth = width;
+            layoutElement.minHeight = 76f;
+            layoutElement.preferredHeight = 82f;
+
+            CreateText(badge.transform, string.IsNullOrWhiteSpace(status) ? "Sin estado" : status, 24, FontStyle.Bold, TextAnchor.MiddleCenter, Color.white);
         }
 
         private static Color GetStatusColor(string status)
@@ -124,7 +166,7 @@ namespace ARDE.RealEstate3D.UI
             return new Color(0.16f, 0.55f, 0.32f);
         }
 
-        private static Text CreateText(Transform parent, string value, int size, FontStyle style, TextAnchor alignment, Color color, Vector2 anchorMin, Vector2 anchorMax)
+        private static Text CreateText(Transform parent, string value, int size, FontStyle style, TextAnchor alignment, Color color)
         {
             GameObject textObject = new GameObject("Text", typeof(RectTransform), typeof(Text));
             textObject.transform.SetParent(parent, false);
@@ -139,25 +181,11 @@ namespace ARDE.RealEstate3D.UI
             text.verticalOverflow = VerticalWrapMode.Overflow;
 
             RectTransform rect = textObject.GetComponent<RectTransform>();
-            rect.anchorMin = anchorMin;
-            rect.anchorMax = anchorMax;
+            rect.anchorMin = Vector2.zero;
+            rect.anchorMax = Vector2.one;
             rect.offsetMin = Vector2.zero;
             rect.offsetMax = Vector2.zero;
             return text;
-        }
-
-        private static GameObject CreatePanel(Transform parent, string name, Color color, Vector2 anchorMin, Vector2 anchorMax)
-        {
-            GameObject panel = new GameObject(name, typeof(RectTransform), typeof(Image));
-            panel.transform.SetParent(parent, false);
-            panel.GetComponent<Image>().color = color;
-
-            RectTransform rect = panel.GetComponent<RectTransform>();
-            rect.anchorMin = anchorMin;
-            rect.anchorMax = anchorMax;
-            rect.offsetMin = Vector2.zero;
-            rect.offsetMax = Vector2.zero;
-            return panel;
         }
 
         private static Button CreateButton(string label, Transform parent, Color color)
@@ -165,7 +193,7 @@ namespace ARDE.RealEstate3D.UI
             GameObject buttonObject = new GameObject(label, typeof(RectTransform), typeof(Image), typeof(Button));
             buttonObject.transform.SetParent(parent, false);
             buttonObject.GetComponent<Image>().color = color;
-            CreateText(buttonObject.transform, label, 24, FontStyle.Bold, TextAnchor.MiddleCenter, Color.white, Vector2.zero, Vector2.one);
+            CreateText(buttonObject.transform, label, 24, FontStyle.Bold, TextAnchor.MiddleCenter, Color.white);
             return buttonObject.GetComponent<Button>();
         }
     }

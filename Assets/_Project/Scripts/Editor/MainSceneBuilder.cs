@@ -9,7 +9,6 @@ using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityEngine.EventSystems;
-using UnityEngine.Rendering;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
@@ -136,8 +135,8 @@ namespace ARDE.RealEstate3D.EditorTools
             Anchor(nav.GetComponent<RectTransform>(), new Vector2(0f, 0.895f), Vector2.one);
 
             HorizontalLayoutGroup layout = nav.AddComponent<HorizontalLayoutGroup>();
-            layout.padding = new RectOffset(54, 54, 18, 18);
-            layout.spacing = 14f;
+            layout.padding = new RectOffset(48, 48, 18, 18);
+            layout.spacing = 12f;
             layout.childForceExpandWidth = false;
             layout.childForceExpandHeight = true;
             layout.childAlignment = TextAnchor.MiddleCenter;
@@ -152,10 +151,10 @@ namespace ARDE.RealEstate3D.EditorTools
 
         private static void AddNavButton(Transform parent, string label, ExperienceSection section, ExperienceManager manager)
         {
-            Button button = CreateButton(label, parent, new Color(0.18f, 0.17f, 0.15f, 0.95f), 30);
+            Button button = CreateButton(label, parent, new Color(0.18f, 0.17f, 0.15f, 0.95f), 26);
             LayoutElement layoutElement = button.gameObject.AddComponent<LayoutElement>();
-            layoutElement.minWidth = 320f;
-            layoutElement.preferredWidth = 335f;
+            layoutElement.minWidth = 330f;
+            layoutElement.preferredWidth = 340f;
             NavigationButton navigationButton = button.gameObject.AddComponent<NavigationButton>();
             navigationButton.Configure(manager, section);
         }
@@ -226,7 +225,10 @@ namespace ARDE.RealEstate3D.EditorTools
             GameObject list = CreatePanel("UnitsList", screen.transform, new Color(0f, 0f, 0f, 0f));
             Anchor(list.GetComponent<RectTransform>(), new Vector2(0.09f, 0.13f), new Vector2(0.91f, 0.69f));
             VerticalLayoutGroup layout = list.AddComponent<VerticalLayoutGroup>();
+            layout.padding = new RectOffset(18, 18, 10, 10);
             layout.spacing = 18f;
+            layout.childControlWidth = true;
+            layout.childControlHeight = true;
             layout.childForceExpandHeight = false;
             layout.childForceExpandWidth = true;
 
@@ -506,55 +508,15 @@ namespace ARDE.RealEstate3D.EditorTools
 
         private static Material CreateMaterial(Color color)
         {
-            Shader shader = GetCompatibleLitShader();
+            Shader shader = Shader.Find("Standard") ?? Shader.Find("Sprites/Default") ?? Shader.Find("Unlit/Color");
+            if (shader == null)
+            {
+                throw new InvalidOperationException("No se encontró un shader compatible para generar materiales ARDE.");
+            }
+
             Material material = new Material(shader);
             ApplyMaterialColor(material, color);
             return material;
-        }
-
-        private static Shader GetCompatibleLitShader()
-        {
-            RenderPipelineAsset activePipeline = GetActiveRenderPipelineAsset();
-            bool usingUniversalRenderPipeline = activePipeline != null && activePipeline.GetType().Name.Contains("Universal");
-            string shaderName = usingUniversalRenderPipeline ? "Universal Render Pipeline/Lit" : "Standard";
-            Shader shader = Shader.Find(shaderName);
-
-            if (shader != null)
-            {
-                return shader;
-            }
-
-            string fallbackShaderName = usingUniversalRenderPipeline ? "Universal Render Pipeline/Simple Lit" : "Sprites/Default";
-            shader = Shader.Find(fallbackShaderName);
-
-            if (shader != null)
-            {
-                return shader;
-            }
-
-            shader = Shader.Find("Unlit/Color") ?? Shader.Find("Legacy Shaders/Diffuse") ?? Shader.Find("Diffuse") ?? Shader.Find("UI/Default");
-
-            if (shader != null)
-            {
-                return shader;
-            }
-
-            throw new InvalidOperationException("No se encontró un shader compatible para generar materiales ARDE.");
-        }
-
-        private static RenderPipelineAsset GetActiveRenderPipelineAsset()
-        {
-            if (QualitySettings.renderPipeline != null)
-            {
-                return QualitySettings.renderPipeline;
-            }
-
-            if (GraphicsSettings.defaultRenderPipeline != null)
-            {
-                return GraphicsSettings.defaultRenderPipeline;
-            }
-
-            return GraphicsSettings.currentRenderPipeline;
         }
 
         private static void ApplyMaterialColor(Material material, Color color)
@@ -564,14 +526,14 @@ namespace ARDE.RealEstate3D.EditorTools
                 return;
             }
 
-            if (material.HasProperty("_BaseColor"))
-            {
-                material.SetColor("_BaseColor", color);
-            }
-
             if (material.HasProperty("_Color"))
             {
                 material.SetColor("_Color", color);
+            }
+
+            if (material.HasProperty("_BaseColor"))
+            {
+                material.SetColor("_BaseColor", color);
             }
 
             material.color = color;

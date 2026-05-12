@@ -201,8 +201,8 @@ Si preferís armar o extender la escena manualmente:
 
 ## Notas de estabilidad MVP 0.2
 
-- El builder genera materiales con un helper compatible con el pipeline activo: usa `Universal Render Pipeline/Lit` solo cuando detecta URP activo desde `QualitySettings.renderPipeline`, `GraphicsSettings.defaultRenderPipeline` o `GraphicsSettings.currentRenderPipeline`; si no, usa `Standard` para evitar objetos magenta en proyectos Built-in.
-- Las cards de unidades se crean sin prefab externo, con textos anclados explícitamente para unidad, tipología, superficie, estado, precio y botón **Consultar**.
+- El builder fuerza `Shader.Find("Standard")` para los materiales del departamento placeholder y solo usa `Sprites/Default` o `Unlit/Color` como fallback, evitando shaders URP incompatibles que puedan generar objetos magenta en Unity 2022.3.62f3.
+- Las cards de unidades se crean sin prefab externo con `LayoutElement` y `HorizontalLayoutGroup`, mostrando unidad, tipología, superficie, estado, precio y botón **Consultar** a ancho completo.
 - La navbar superior usa botones más anchos y padding extra para reducir cortes de texto en 1920x1080.
 
 ## Cómo cambiar datos mockeados

@@ -1,6 +1,5 @@
 #if UNITY_EDITOR
 using System;
-using System.Collections.Generic;
 using System.Reflection;
 using ARDE.RealEstate3D.Core;
 using ARDE.RealEstate3D.Data;
@@ -169,16 +168,16 @@ namespace ARDE.RealEstate3D.EditorTools
             NavigationButton startNavigation = start.gameObject.AddComponent<NavigationButton>();
             startNavigation.Configure(manager, ExperienceSection.Experience);
 
-            CreateSecondaryHomeButton(screen.transform, manager, "Ver unidades", ExperienceSection.Units, 0.25f);
-            CreateSecondaryHomeButton(screen.transform, manager, "Amenities", ExperienceSection.Amenities, 0.40f);
-            CreateSecondaryHomeButton(screen.transform, manager, "Contacto", ExperienceSection.Contact, 0.55f);
+            CreateSecondaryHomeButton(screen.transform, manager, "Ver unidades", ExperienceSection.Units, 0.235f);
+            CreateSecondaryHomeButton(screen.transform, manager, "Amenities", ExperienceSection.Amenities, 0.415f);
+            CreateSecondaryHomeButton(screen.transform, manager, "Contacto", ExperienceSection.Contact, 0.595f);
             return screen;
         }
 
         private static void CreateSecondaryHomeButton(Transform parent, ExperienceManager manager, string label, ExperienceSection section, float minX)
         {
             Button button = CreateButton(label, parent, new Color(0.16f, 0.15f, 0.13f, 1f), 25);
-            Anchor(button.GetComponent<RectTransform>(), new Vector2(minX, 0.14f), new Vector2(minX + 0.12f, 0.21f));
+            Anchor(button.GetComponent<RectTransform>(), new Vector2(minX, 0.14f), new Vector2(minX + 0.17f, 0.215f));
             NavigationButton navigationButton = button.gameObject.AddComponent<NavigationButton>();
             navigationButton.Configure(manager, section);
         }
@@ -195,7 +194,7 @@ namespace ARDE.RealEstate3D.EditorTools
             CreateText("Elegí un ambiente o tocá los puntos destacados.", header.transform, 24, FontStyle.Normal, TextAnchor.UpperLeft, new Vector2(0.06f, 0.12f), new Vector2(0.94f, 0.48f), Beige);
 
             GameObject tourMenu = CreatePanel("Menu Ambientes", screen.transform, new Color(0.035f, 0.033f, 0.03f, 0.88f));
-            Anchor(tourMenu.GetComponent<RectTransform>(), new Vector2(0.03f, 0.08f), new Vector2(0.64f, 0.18f));
+            Anchor(tourMenu.GetComponent<RectTransform>(), new Vector2(0.03f, 0.075f), new Vector2(0.72f, 0.185f));
             HorizontalLayoutGroup layout = tourMenu.AddComponent<HorizontalLayoutGroup>();
             layout.padding = new RectOffset(18, 18, 14, 14);
             layout.spacing = 12f;
@@ -205,7 +204,7 @@ namespace ARDE.RealEstate3D.EditorTools
             string[] labels = { "General", "Living", "Cocina", "Dormitorio", "Baño", "Balcón" };
             for (int i = 0; i < labels.Length; i++)
             {
-                Button button = CreateButton(labels[i], tourMenu.transform, WarmWhite, 23, new Color(0.12f, 0.1f, 0.08f));
+                Button button = CreateButton(labels[i], tourMenu.transform, WarmWhite, 24, new Color(0.12f, 0.1f, 0.08f));
                 CameraPointButton cameraButton = button.gameObject.AddComponent<CameraPointButton>();
                 cameraButton.Configure(controller, i);
             }
@@ -368,14 +367,44 @@ namespace ARDE.RealEstate3D.EditorTools
 
         private static void CreateHotspot(Transform parent, InfoPanelController panel, string name, Vector3 position, HotspotData data)
         {
-            GameObject hotspotObject = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-            hotspotObject.name = name;
+            Material hotspotMaterial = CreateMaterial(new Color(0.95f, 0.68f, 0.18f));
+            GameObject hotspotObject = new GameObject(name);
             hotspotObject.transform.SetParent(parent, false);
             hotspotObject.transform.position = position;
-            hotspotObject.transform.localScale = Vector3.one * 0.32f;
-            hotspotObject.GetComponent<Renderer>().sharedMaterial = CreateMaterial(new Color(0.95f, 0.68f, 0.18f));
+
+            SphereCollider collider = hotspotObject.AddComponent<SphereCollider>();
+            collider.radius = 0.42f;
+            collider.isTrigger = true;
+
+            GameObject visualRoot = new GameObject("Hotspot Visual");
+            visualRoot.transform.SetParent(hotspotObject.transform, false);
+
+            GameObject halo = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+            halo.name = "Halo";
+            halo.transform.SetParent(visualRoot.transform, false);
+            halo.transform.localPosition = new Vector3(0f, -0.22f, 0f);
+            halo.transform.localScale = new Vector3(0.34f, 0.012f, 0.34f);
+            halo.GetComponent<Renderer>().sharedMaterial = hotspotMaterial;
+            UnityEngine.Object.DestroyImmediate(halo.GetComponent<Collider>());
+
+            GameObject stem = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+            stem.name = "Stem";
+            stem.transform.SetParent(visualRoot.transform, false);
+            stem.transform.localPosition = new Vector3(0f, -0.02f, 0f);
+            stem.transform.localScale = new Vector3(0.055f, 0.22f, 0.055f);
+            stem.GetComponent<Renderer>().sharedMaterial = hotspotMaterial;
+            UnityEngine.Object.DestroyImmediate(stem.GetComponent<Collider>());
+
+            GameObject dot = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+            dot.name = "Dot";
+            dot.transform.SetParent(visualRoot.transform, false);
+            dot.transform.localPosition = new Vector3(0f, 0.24f, 0f);
+            dot.transform.localScale = Vector3.one * 0.22f;
+            dot.GetComponent<Renderer>().sharedMaterial = hotspotMaterial;
+            UnityEngine.Object.DestroyImmediate(dot.GetComponent<Collider>());
+
             Hotspot hotspot = hotspotObject.AddComponent<Hotspot>();
-            hotspot.Configure(data, panel);
+            hotspot.Configure(data, panel, visualRoot.transform);
         }
 
         private static CameraPoint[] CreateCameraPoints()

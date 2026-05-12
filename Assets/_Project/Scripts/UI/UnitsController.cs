@@ -115,7 +115,7 @@ namespace ARDE.RealEstate3D.UI
 
         private static Color GetStatusColor(string status)
         {
-            string normalized = status.ToLowerInvariant();
+            string normalized = string.IsNullOrWhiteSpace(status) ? string.Empty : status.ToLowerInvariant();
             if (normalized.Contains("reserv")) return new Color(0.82f, 0.58f, 0.18f);
             if (normalized.Contains("vend")) return new Color(0.48f, 0.48f, 0.5f);
             return new Color(0.16f, 0.55f, 0.32f);

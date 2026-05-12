@@ -1,6 +1,7 @@
 using System;
 using ARDE.RealEstate3D.Hotspots;
 using UnityEngine;
+using UnityEngine.EventSystems;
 
 namespace ARDE.RealEstate3D.Core
 {
@@ -108,7 +109,7 @@ namespace ARDE.RealEstate3D.Core
                 screenPosition = Input.GetTouch(0).position;
             }
 
-            if (!pressed || targetCamera == null)
+            if (!pressed || targetCamera == null || IsPointerOverUi())
             {
                 return;
             }
@@ -122,6 +123,21 @@ namespace ARDE.RealEstate3D.Core
                     hotspot.Select();
                 }
             }
+        }
+
+        private static bool IsPointerOverUi()
+        {
+            if (EventSystem.current == null)
+            {
+                return false;
+            }
+
+            if (Input.touchCount > 0)
+            {
+                return EventSystem.current.IsPointerOverGameObject(Input.GetTouch(0).fingerId);
+            }
+
+            return EventSystem.current.IsPointerOverGameObject();
         }
     }
 }

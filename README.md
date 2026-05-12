@@ -110,7 +110,7 @@ La escena creada contiene:
 - Departamento placeholder construido con primitivas y mobiliario básico.
 - Seis puntos de cámara: General, Living, Cocina, Dormitorio, Baño y Balcón.
 - Menú de ambientes para navegación guiada tipo tour.
-- Cinco hotspots interactivos con los datos mockeados del MVP.
+- Cinco hotspots interactivos con visual tipo pin, pulso suave y feedback al seleccionar.
 - Managers principales configurados.
 
 ## Cómo probar el flujo
@@ -126,7 +126,7 @@ La escena creada contiene:
    - Dormitorio.
    - Baño.
    - Balcón.
-6. Clickear/tocar los hotspots dorados:
+6. Clickear/tocar los hotspots dorados tipo pin:
    - Living comedor.
    - Cocina integrada.
    - Dormitorio principal.
@@ -263,7 +263,7 @@ Si preferís armar o extender la escena manualmente:
 - Cards horizontales de unidades con estado, precio y botón Consultar.
 - Amenities con inicial destacada, título y descripción.
 - Contacto y QRModal más claros para totem.
-- Correcciones técnicas: builder en carpeta Editor, sin `forceModuleActive`, fuente `LegacyRuntime.ttf` y hotspots sin doble disparo.
+- Correcciones técnicas: builder en carpeta Editor, sin `forceModuleActive`, fuente `LegacyRuntime.ttf`, hotspots sin doble disparo y raycast 3D bloqueado cuando el toque está sobre UI.
 
 ### Versión 1.0 — Producto demo premium
 

@@ -199,6 +199,11 @@ Si preferís armar o extender la escena manualmente:
 8. Crear botones de navegación y agregar `NavigationButton`, seleccionando la sección destino.
 9. Para unidades y amenities, asignar un contenedor UI a `UnitsController` y `AmenitiesController`. Si no se asignan prefabs de card, los controladores crean cards simples por defecto.
 
+## Notas de estabilidad MVP 0.2
+
+- El builder genera materiales con un helper compatible con el pipeline activo: usa `Universal Render Pipeline/Lit` solo cuando detecta URP activo desde `QualitySettings.renderPipeline`, `GraphicsSettings.defaultRenderPipeline` o `GraphicsSettings.currentRenderPipeline`; si no, usa `Standard` para evitar objetos magenta en proyectos Built-in.
+- Las cards de unidades se crean sin prefab externo, con textos anclados explícitamente para unidad, tipología, superficie, estado, precio y botón **Consultar**.
+- La navbar superior usa botones más anchos y padding extra para reducir cortes de texto en 1920x1080.
 
 ## Cómo cambiar datos mockeados
 

@@ -17,6 +17,23 @@ namespace ARDE.RealEstate3D.EditorTools
     public static class MainSceneBuilder
     {
         private const string ScenePath = "Assets/_Project/Scenes/MainScene.unity";
+        private const string SeaViewScenePath = "Assets/ModernArchViz_SeaView/SeaViewArchViz/Scenes/SampleScene.unity";
+
+        private static readonly string[] SeaViewRootNames =
+        {
+            "HouseExterior",
+            "Living Area",
+            "Laundry Room",
+            "Study",
+            "Bathrooms",
+            "Bedrooms",
+            "Hallways",
+            "Global Light Switches",
+            "Global Wall Plugs",
+            "Area Lights",
+            "Reflection Probes",
+            "LED_PointLights"
+        };
 
         private static readonly Color SoftBlack = new Color(0.055f, 0.052f, 0.047f, 1f);
         private static readonly Color WarmWhite = new Color(0.965f, 0.945f, 0.895f, 1f);
@@ -33,7 +50,14 @@ namespace ARDE.RealEstate3D.EditorTools
 
             Camera camera = CreateCamera();
             CreateLighting();
-            GameObject apartmentRoot = CreateApartmentPlaceholders();
+            GameObject environmentRoot = TryCreateSeaViewEnvironment();
+            bool usingSeaViewEnvironment = environmentRoot != null;
+
+            if (!usingSeaViewEnvironment)
+            {
+                environmentRoot = CreateApartmentPlaceholders();
+                Debug.LogWarning($"No se encontró o no se pudo integrar Modern ArchViz: Sea View en {SeaViewScenePath}. Se generó el placeholder premium como fallback.");
+            }
 
             Canvas canvas = CreateCanvas();
             CreateEventSystem();
@@ -61,9 +85,9 @@ namespace ARDE.RealEstate3D.EditorTools
             SetField(manager, "qrPanel", qrPanel);
 
             SetField(cameraController, "targetCamera", camera);
-            SetField(cameraController, "cameraPoints", CreateCameraPoints());
+            SetField(cameraController, "cameraPoints", CreateCameraPoints(environmentRoot, usingSeaViewEnvironment));
 
-            CreateHotspots(apartmentRoot.transform, infoPanel);
+            CreateHotspots(environmentRoot, infoPanel, usingSeaViewEnvironment);
 
             navigation.transform.SetAsLastSibling();
             infoPanel.transform.SetAsLastSibling();
@@ -116,6 +140,63 @@ namespace ARDE.RealEstate3D.EditorTools
             light.color = new Color(1f, 0.82f, 0.58f);
             light.range = range;
             light.intensity = intensity;
+        }
+
+
+        private static GameObject TryCreateSeaViewEnvironment()
+        {
+            SceneAsset seaViewSceneAsset = AssetDatabase.LoadAssetAtPath<SceneAsset>(SeaViewScenePath);
+            if (seaViewSceneAsset == null)
+            {
+                return null;
+            }
+
+            Scene targetScene = SceneManager.GetActiveScene();
+            Scene sourceScene = EditorSceneManager.OpenScene(SeaViewScenePath, OpenSceneMode.Additive);
+
+            GameObject environmentRoot = new GameObject("SeaView Environment");
+            SceneManager.MoveGameObjectToScene(environmentRoot, targetScene);
+
+            int copiedObjects = 0;
+            foreach (string rootName in SeaViewRootNames)
+            {
+                GameObject sourceRoot = FindRootObject(sourceScene, rootName);
+                if (sourceRoot == null)
+                {
+                    Debug.LogWarning($"No se encontró '{rootName}' en {SeaViewScenePath}. Revisar jerarquía del asset Sea View.");
+                    continue;
+                }
+
+                GameObject copy = UnityEngine.Object.Instantiate(sourceRoot);
+                copy.name = rootName;
+                SceneManager.MoveGameObjectToScene(copy, targetScene);
+                copy.transform.SetParent(environmentRoot.transform, true);
+                copiedObjects++;
+            }
+
+            EditorSceneManager.CloseScene(sourceScene, true);
+
+            if (copiedObjects == 0)
+            {
+                UnityEngine.Object.DestroyImmediate(environmentRoot);
+                return null;
+            }
+
+            Debug.Log($"SeaView Environment creado con {copiedObjects} grupos desde Modern ArchViz: Sea View.");
+            return environmentRoot;
+        }
+
+        private static GameObject FindRootObject(Scene scene, string rootName)
+        {
+            foreach (GameObject rootObject in scene.GetRootGameObjects())
+            {
+                if (rootObject.name == rootName)
+                {
+                    return rootObject;
+                }
+            }
+
+            return null;
         }
 
         private static Canvas CreateCanvas()
@@ -421,13 +502,43 @@ namespace ARDE.RealEstate3D.EditorTools
             return root;
         }
 
-        private static void CreateHotspots(Transform parent, InfoPanelController panel)
+        private static void CreateHotspots(GameObject environmentRoot, InfoPanelController panel, bool usingSeaViewEnvironment)
         {
-            CreateHotspot(parent, panel, "Hotspot Living comedor", new Vector3(0.4f, 1.35f, -1.85f), new HotspotData("Living comedor", "Espacio principal con iluminación natural, salida al balcón y distribución integrada.", new[] { "Superficie: 18 m²", "Piso: porcelanato", "Orientación: norte" }));
-            CreateHotspot(parent, panel, "Hotspot Cocina integrada", new Vector3(3.0f, 1.55f, 1.45f), new HotspotData("Cocina integrada", "Cocina moderna con muebles bajo mesada, alacena y espacio para lavarropas.", new[] { "Mesada: granito", "Muebles: melamina premium", "Conexión: eléctrica/gas según unidad" }));
-            CreateHotspot(parent, panel, "Hotspot Dormitorio principal", new Vector3(-3.45f, 1.35f, 0.10f), new HotspotData("Dormitorio principal", "Ambiente cómodo con placard empotrado y ventana al contrafrente.", new[] { "Superficie: 12 m²", "Placard: incluido", "Ventilación natural" }));
-            CreateHotspot(parent, panel, "Hotspot Baño completo", new Vector3(-3.35f, 1.38f, 2.85f), new HotspotData("Baño completo", "Baño moderno con revestimientos de primera línea y grifería cromada.", new[] { "Ducha", "Vanitory", "Extractor / ventilación" }));
-            CreateHotspot(parent, panel, "Hotspot Balcón", new Vector3(0f, 1.25f, -4.45f), new HotspotData("Balcón", "Balcón al frente con vista abierta, ideal para expansión del living.", new[] { "Superficie: 4 m²", "Baranda vidriada", "Orientación norte" }));
+            Transform hotspotParent = new GameObject("ARDE Hotspots").transform;
+
+            if (usingSeaViewEnvironment)
+            {
+                CreateSeaViewHotspots(environmentRoot.transform, hotspotParent, panel);
+                return;
+            }
+
+            CreateHotspot(hotspotParent, panel, "Hotspot Living comedor", new Vector3(0.4f, 1.35f, -1.85f), new HotspotData("Living comedor", "Espacio principal con iluminación natural, salida al balcón y distribución integrada.", new[] { "Superficie: 18 m²", "Piso: porcelanato", "Orientación: norte" }));
+            CreateHotspot(hotspotParent, panel, "Hotspot Cocina integrada", new Vector3(3.0f, 1.55f, 1.45f), new HotspotData("Cocina integrada", "Cocina moderna con muebles bajo mesada, alacena y espacio para lavarropas.", new[] { "Mesada: granito", "Muebles: melamina premium", "Conexión: eléctrica/gas según unidad" }));
+            CreateHotspot(hotspotParent, panel, "Hotspot Dormitorio principal", new Vector3(-3.45f, 1.35f, 0.10f), new HotspotData("Dormitorio principal", "Ambiente cómodo con placard empotrado y ventana al contrafrente.", new[] { "Superficie: 12 m²", "Placard: incluido", "Ventilación natural" }));
+            CreateHotspot(hotspotParent, panel, "Hotspot Baño completo", new Vector3(-3.35f, 1.38f, 2.85f), new HotspotData("Baño completo", "Baño moderno con revestimientos de primera línea y grifería cromada.", new[] { "Ducha", "Vanitory", "Extractor / ventilación" }));
+            CreateHotspot(hotspotParent, panel, "Hotspot Balcón", new Vector3(0f, 1.25f, -4.45f), new HotspotData("Balcón", "Balcón al frente con vista abierta, ideal para expansión del living.", new[] { "Superficie: 4 m²", "Baranda vidriada", "Orientación norte" }));
+        }
+
+        private static void CreateSeaViewHotspots(Transform environmentRoot, Transform hotspotParent, InfoPanelController panel)
+        {
+            Bounds living = GetChildBoundsOrFallback(environmentRoot, "Living Area");
+            Bounds bedrooms = GetChildBoundsOrFallback(environmentRoot, "Bedrooms");
+            Bounds bathrooms = GetChildBoundsOrFallback(environmentRoot, "Bathrooms");
+
+            CreateHotspot(hotspotParent, panel, "Hotspot Living comedor", HotspotPoint(living, new Vector3(0f, 0f, -0.15f)), new HotspotData("Living comedor", "Área social principal del entorno Sea View, ideal para presentar amplitud, iluminación y relación con los ventanales.", new[] { "Ambiente: Living Area", "Recorrido guiado", "Vista comercial" }));
+            CreateHotspot(hotspotParent, panel, "Hotspot Cocina integrada", HotspotPoint(living, new Vector3(0.42f, 0f, 0.28f)), new HotspotData("Cocina integrada", "Sector de cocina/barra integrado al espacio social, preparado para mostrar terminaciones y equipamiento.", new[] { "Zona: Living Area", "Barra / apoyo", "Integración social" }));
+            CreateHotspot(hotspotParent, panel, "Hotspot Dormitorio principal", HotspotPoint(bedrooms, Vector3.zero), new HotspotData("Dormitorio principal", "Ambiente privado del asset Sea View, pensado para destacar confort, guardado y luz natural.", new[] { "Grupo: Bedrooms", "Uso privado", "Escala real" }));
+            CreateHotspot(hotspotParent, panel, "Hotspot Baño completo", HotspotPoint(bathrooms, Vector3.zero), new HotspotData("Baño completo", "Sector de baños del modelo real, útil para mostrar revestimientos, artefactos y terminaciones.", new[] { "Grupo: Bathrooms", "Terminaciones", "Equipamiento" }));
+            CreateHotspot(hotspotParent, panel, "Hotspot Balcón", HotspotPoint(living, new Vector3(0f, 0f, -0.48f)), new HotspotData("Balcón / vista", "Punto cercano a ventanales y vista exterior para presentar expansión visual y conexión con el entorno.", new[] { "Ventanales", "Vista exterior", "Expansión" }));
+        }
+
+        private static Vector3 HotspotPoint(Bounds bounds, Vector3 normalizedOffset)
+        {
+            Vector3 center = bounds.center;
+            center.x += bounds.extents.x * normalizedOffset.x;
+            center.z += bounds.extents.z * normalizedOffset.z;
+            center.y = bounds.min.y + Mathf.Max(1.35f, bounds.size.y * 0.45f);
+            return center;
         }
 
         private static void CreateHotspot(Transform parent, InfoPanelController panel, string name, Vector3 position, HotspotData data)
@@ -472,17 +583,104 @@ namespace ARDE.RealEstate3D.EditorTools
             hotspot.Configure(data, panel, visualRoot.transform);
         }
 
-        private static CameraPoint[] CreateCameraPoints()
+        private static CameraPoint[] CreateCameraPoints(GameObject environmentRoot, bool usingSeaViewEnvironment)
         {
+            if (!usingSeaViewEnvironment)
+            {
+                return new[]
+                {
+                    new CameraPoint("General", CreatePoint("CameraPoint General", new Vector3(0f, 4.6f, -8.8f), Quaternion.Euler(34f, 0f, 0f))),
+                    new CameraPoint("Living", CreatePoint("CameraPoint Living", new Vector3(0.2f, 2.25f, -5.15f), Quaternion.Euler(15f, 0f, 0f))),
+                    new CameraPoint("Cocina", CreatePoint("CameraPoint Cocina", new Vector3(4.35f, 1.95f, -0.75f), Quaternion.Euler(15f, -42f, 0f))),
+                    new CameraPoint("Dormitorio", CreatePoint("CameraPoint Dormitorio", new Vector3(-4.35f, 1.85f, -2.55f), Quaternion.Euler(14f, 25f, 0f))),
+                    new CameraPoint("Baño", CreatePoint("CameraPoint Baño", new Vector3(-4.85f, 1.75f, 1.75f), Quaternion.Euler(13f, 55f, 0f))),
+                    new CameraPoint("Balcón", CreatePoint("CameraPoint Balcón", new Vector3(0f, 1.95f, -6.35f), Quaternion.Euler(10f, 0f, 0f)))
+                };
+            }
+
+            return CreateSeaViewCameraPoints(environmentRoot.transform);
+        }
+
+        private static CameraPoint[] CreateSeaViewCameraPoints(Transform environmentRoot)
+        {
+            Bounds living = GetChildBoundsOrFallback(environmentRoot, "Living Area");
+            Bounds hallways = GetChildBoundsOrFallback(environmentRoot, "Hallways");
+            Bounds bedrooms = GetChildBoundsOrFallback(environmentRoot, "Bedrooms");
+            Bounds bathrooms = GetChildBoundsOrFallback(environmentRoot, "Bathrooms");
+
+            Bounds general = living;
+            general.Encapsulate(hallways);
+
             return new[]
             {
-                new CameraPoint("General", CreatePoint("CameraPoint General", new Vector3(0f, 4.6f, -8.8f), Quaternion.Euler(34f, 0f, 0f))),
-                new CameraPoint("Living", CreatePoint("CameraPoint Living", new Vector3(0.2f, 2.25f, -5.15f), Quaternion.Euler(15f, 0f, 0f))),
-                new CameraPoint("Cocina", CreatePoint("CameraPoint Cocina", new Vector3(4.35f, 1.95f, -0.75f), Quaternion.Euler(15f, -42f, 0f))),
-                new CameraPoint("Dormitorio", CreatePoint("CameraPoint Dormitorio", new Vector3(-4.35f, 1.85f, -2.55f), Quaternion.Euler(14f, 25f, 0f))),
-                new CameraPoint("Baño", CreatePoint("CameraPoint Baño", new Vector3(-4.85f, 1.75f, 1.75f), Quaternion.Euler(13f, 55f, 0f))),
-                new CameraPoint("Balcón", CreatePoint("CameraPoint Balcón", new Vector3(0f, 1.95f, -6.35f), Quaternion.Euler(10f, 0f, 0f)))
+                CreateLookCameraPoint("General", general, new Vector3(0f, 0.30f, -1.25f), 1.35f),
+                CreateLookCameraPoint("Living", living, new Vector3(0f, 0.18f, -0.95f), 1.20f),
+                CreateLookCameraPoint("Cocina", living, new Vector3(0.58f, 0.16f, -0.18f), 1.10f),
+                CreateLookCameraPoint("Dormitorio", bedrooms, new Vector3(0f, 0.16f, -0.95f), 1.10f),
+                CreateLookCameraPoint("Baño", bathrooms, new Vector3(0f, 0.14f, -1.10f), 1.00f),
+                CreateLookCameraPoint("Balcón", living, new Vector3(0f, 0.15f, -1.35f), 1.10f)
             };
+        }
+
+        private static CameraPoint CreateLookCameraPoint(string label, Bounds bounds, Vector3 normalizedOffset, float targetHeight)
+        {
+            Vector3 target = bounds.center + Vector3.up * targetHeight;
+            Vector3 position = bounds.center;
+            position.x += bounds.extents.x * normalizedOffset.x;
+            position.y = bounds.min.y + Mathf.Max(1.45f, bounds.size.y * normalizedOffset.y);
+            position.z += bounds.extents.z * normalizedOffset.z;
+
+            float minDistance = Mathf.Max(2.2f, Mathf.Max(bounds.extents.x, bounds.extents.z) * 0.35f);
+            if ((position - target).magnitude < minDistance)
+            {
+                position += new Vector3(0f, 0f, -minDistance);
+            }
+
+            Quaternion rotation = Quaternion.LookRotation(target - position, Vector3.up);
+            return new CameraPoint(label, CreatePoint($"CameraPoint {label}", position, rotation));
+        }
+
+        private static Bounds GetChildBoundsOrFallback(Transform environmentRoot, string childName)
+        {
+            Transform child = environmentRoot.Find(childName);
+            if (child != null && TryGetRendererBounds(child, out Bounds childBounds))
+            {
+                return childBounds;
+            }
+
+            if (TryGetRendererBounds(environmentRoot, out Bounds rootBounds))
+            {
+                return rootBounds;
+            }
+
+            return new Bounds(Vector3.zero, Vector3.one * 5f);
+        }
+
+        private static bool TryGetRendererBounds(Transform root, out Bounds bounds)
+        {
+            Renderer[] renderers = root.GetComponentsInChildren<Renderer>(true);
+            bounds = new Bounds(root.position, Vector3.one);
+            bool hasBounds = false;
+
+            foreach (Renderer renderer in renderers)
+            {
+                if (renderer == null)
+                {
+                    continue;
+                }
+
+                if (!hasBounds)
+                {
+                    bounds = renderer.bounds;
+                    hasBounds = true;
+                }
+                else
+                {
+                    bounds.Encapsulate(renderer.bounds);
+                }
+            }
+
+            return hasBounds;
         }
 
         private static Transform CreatePoint(string name, Vector3 position, Quaternion rotation)

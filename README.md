@@ -107,7 +107,7 @@ La escena creada contiene:
 - AmenitiesScreen.
 - ContactScreen.
 - Modal QR/WhatsApp.
-- Departamento placeholder construido con primitivas y mobiliario básico.
+- Entorno `SeaView Environment` generado desde Modern ArchViz: Sea View cuando el asset está importado; si no existe, fallback `Departamento Placeholder Premium`.
 - Seis puntos de cámara: General, Living, Cocina, Dormitorio, Baño y Balcón.
 - Menú de ambientes para navegación guiada tipo tour.
 - Cinco hotspots interactivos con visual tipo pin, pulso suave y feedback al seleccionar.
@@ -200,25 +200,78 @@ Si preferís armar o extender la escena manualmente:
 9. Para unidades y amenities, asignar un contenedor UI a `UnitsController` y `AmenitiesController`. Si no se asignan prefabs de card, los controladores crean cards simples por defecto.
 
 
+
+## Integración Modern ArchViz: Sea View
+
+El MVP 0.3 usa como entorno principal el asset **Modern ArchViz: Sea View** cuando está importado en la ruta esperada:
+
+```text
+Assets/ModernArchViz_SeaView/SeaViewArchViz/
+Assets/ModernArchViz_SeaView/SeaViewArchViz/Scenes/SampleScene.unity
+```
+
+Al ejecutar **ARDE > Crear MainScene MVP 0.3**, el builder abre `SampleScene.unity` de forma aditiva, copia de manera no destructiva los grupos de escena necesarios y los agrupa en un root nuevo llamado:
+
+```text
+SeaView Environment
+```
+
+Objetos copiados desde la escena demo del asset:
+
+- `HouseExterior`
+- `Living Area`
+- `Laundry Room`
+- `Study`
+- `Bathrooms`
+- `Bedrooms`
+- `Hallways`
+- `Global Light Switches`
+- `Global Wall Plugs`
+- `Area Lights`
+- `Reflection Probes`
+- `LED_PointLights`
+
+El builder **no copia** la `Main Camera` ni la `Directional Light` de la escena del asset. ARDE mantiene su cámara, luces principales, UI y managers propios. Si el asset no está disponible, el builder usa el `Departamento Placeholder Premium` como fallback y muestra un warning en consola.
+
+### Ajustar cámaras y hotspots en el asset real
+
+Los `CameraPoint` y hotspots se posicionan automáticamente a partir de los bounds de `Living Area`, `Bedrooms`, `Bathrooms` y `Hallways`. Después de generar la escena, se pueden afinar manualmente desde el Inspector:
+
+1. Abrir `Assets/_Project/Scenes/MainScene.unity`.
+2. Localizar los objetos `CameraPoint General`, `CameraPoint Living`, `CameraPoint Cocina`, `CameraPoint Dormitorio`, `CameraPoint Baño` y `CameraPoint Balcón`.
+3. Mover/rotar cada punto para lograr la composición deseada dentro del asset.
+4. Localizar `ARDE Hotspots` y ajustar la posición de cada hotspot sobre Living, Cocina, Dormitorio, Baño y Balcón/vista exterior.
+5. Guardar la escena si el ajuste es específico para una demo comercial.
+
+### Pasos manuales si no se puede copiar la escena automáticamente
+
+1. Abrir `Assets/ModernArchViz_SeaView/SeaViewArchViz/Scenes/SampleScene.unity`.
+2. Copiar los grupos listados arriba.
+3. Abrir `Assets/_Project/Scenes/MainScene.unity`.
+4. Crear un objeto vacío `SeaView Environment` y pegar los grupos como hijos.
+5. No copiar `Main Camera` ni `Directional Light` del asset.
+6. Eliminar o desactivar `Departamento Placeholder Premium` si existe.
+7. Reubicar `CameraPoint` y `ARDE Hotspots` sobre las zonas reales del asset.
+
 ## Dirección visual MVP 0.3
 
 - Estética de sala de ventas digital: blanco cálido, beige, negro suave, gris piedra y dorado champagne.
 - HomeScreen con hero comercial, claim, CTAs secundarios y datos destacados del emprendimiento.
 - Recorrido con overlay discreto y menú de ambientes tipo pills para mantener foco en el 3D.
 - Panel lateral de hotspot diseñado como ficha comercial con fondo claro, línea de acento, botón Consultar, placeholder Ver plano y cierre visible.
-- Departamento placeholder enriquecido con marcos de ventana, luminarias, cuadros, planta, alfombra y detalles simples para acercarse a un showroom sin usar assets externos.
+- Entorno Modern ArchViz: Sea View integrado como showroom real; el placeholder enriquecido queda solo como fallback si el asset no está importado.
 
 ## Próximos pasos con assets reales
 
-1. Importar el modelo arquitectónico en `Assets/_Project/Models/` en formato FBX, glTF convertido o paquete propio de Unity.
-2. Mantener los managers y pantallas generados por el builder, reemplazando solo el objeto `Departamento Placeholder Premium`.
+1. Importar modelos propios en `Assets/_Project/Models/` en formato FBX, glTF convertido o paquete propio de Unity.
+2. Mantener los managers y pantallas generados por el builder, reemplazando o complementando el root `SeaView Environment`.
 3. Reposicionar los `CameraPoint` y hotspots para coincidir con el modelo real.
-4. Reemplazar materiales placeholder por materiales optimizados para WebGL, manteniendo una paleta sobria y evitando shaders no compatibles.
+4. Revisar materiales para WebGL, manteniendo una paleta sobria y evitando shaders no compatibles.
 5. Convertir datos comerciales a ScriptableObjects o JSON cuando el contenido deje de ser mockeado.
 
 ## Notas de estabilidad MVP 0.3
 
-- El builder fuerza `Shader.Find("Standard")` para los materiales del departamento placeholder y solo usa `Sprites/Default` o `Unlit/Color` como fallback, evitando shaders URP incompatibles que puedan generar objetos magenta en Unity 2022.3.62f3.
+- El builder fuerza `Shader.Find("Standard")` para materiales generados por ARDE y solo usa `Sprites/Default` o `Unlit/Color` como fallback, evitando shaders URP incompatibles que puedan generar objetos magenta en Unity 2022.3.62f3.
 - Las cards de unidades se crean sin prefab externo con `LayoutElement` y `HorizontalLayoutGroup`, mostrando unidad, tipología, superficie, estado, precio y botón **Consultar** a ancho completo.
 - La navbar superior usa botones más anchos y padding extra para reducir cortes de texto en 1920x1080.
 
